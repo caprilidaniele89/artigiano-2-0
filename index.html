@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Artigiano 2.0">
+<link rel="manifest" href="manifest.json">
+<title>Artigiano 2.0</title>
+<style>
+:root{--red:#dc2626;--dark:#111827;--bg:#f3f4f6;--muted:#6b7280;--line:#e5e7eb;--green:#16a34a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#1f2937;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding-bottom:90px}
+header{background:var(--dark);color:white;padding:14px 16px;position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:10px}.logo{width:40px;height:40px;border-radius:10px;background:var(--red);display:grid;place-items:center;font-size:22px}
+h1{font-size:18px;margin:0}.sub{font-size:11px;color:#9ca3af;letter-spacing:1px;text-transform:uppercase}
+main{max-width:720px;margin:auto;padding:14px}.tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;background:white;padding:5px;border-radius:13px;margin-bottom:14px;box-shadow:0 1px 3px #0001}
+.tab{border:0;background:transparent;padding:10px 3px;border-radius:9px;color:#6b7280;font-weight:700;font-size:12px}.tab.active{background:var(--red);color:white}
+.panel{display:none}.panel.active{display:block}.card{background:white;padding:15px;border-radius:13px;margin-bottom:12px;box-shadow:0 1px 3px #0001}
+h2{font-size:17px;margin:0 0 12px}h3{font-size:15px;margin:0 0 8px}
+.muted{color:var(--muted);font-size:13px}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.between{justify-content:space-between}
+.btn{border:0;border-radius:9px;background:var(--red);color:white;padding:10px 13px;font-weight:700;font-size:13px;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:5px}
+.btn.gray{background:#4b5563}.btn.green{background:#16a34a}.btn.blue{background:#2563eb}.btn.light{background:#f3f4f6;color:#1f2937}.btn.small{padding:7px 9px;font-size:12px}
+input,select,textarea{width:100%;padding:11px;border:1px solid #d1d5db;border-radius:9px;font:inherit;font-size:14px;margin:5px 0 12px;background:white}
+label{font-size:12px;font-weight:700;color:#4b5563}textarea{min-height:75px;resize:vertical}.field{margin-top:8px}
+.job{border:1px solid var(--line);border-radius:11px;padding:12px;margin-top:10px}
+.job.ztl{background:#fff1f2;border-color:#fca5a5}.tag{font-size:10px;font-weight:800;background:var(--red);color:white;padding:4px 7px;border-radius:5px;display:inline-block;margin-bottom:6px}
+.tag.green{background:#dcfce7;color:#166534}.tag.gray{background:#e5e7eb;color:#374151}
+.job-title{font-weight:800}.job p{font-size:13px;color:#4b5563;margin:6px 0}
+.bottom-add{position:fixed;right:18px;bottom:18px;width:58px;height:58px;border:0;border-radius:50%;background:var(--red);color:white;font-size:30px;box-shadow:0 4px 14px #0003;z-index:8}
+.monthnav{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}.dayhead{text-align:center;font-size:11px;color:var(--muted);font-weight:700;padding:5px 0}.day{min-height:54px;background:#fff;border:1px solid var(--line);border-radius:7px;padding:5px 3px;font-size:12px;text-align:center}.day.today{border:2px solid var(--red)}.day.has{background:#fee2e2;border-color:#fca5a5;font-weight:800}.day small{display:block;font-size:9px;color:#991b1b;margin-top:3px}
+.empty{text-align:center;padding:22px;color:var(--muted);font-size:13px}
+hr{border:0;border-top:1px solid var(--line);margin:12px 0}.hidden{display:none!important}
+.modal{position:fixed;inset:0;background:#0008;z-index:20;display:none;overflow:auto;padding:18px}.modal.show{display:block}.modalbox{background:white;border-radius:15px;max-width:600px;margin:20px auto;padding:17px}
+.modalhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.close{border:0;background:#eee;border-radius:8px;padding:8px 11px;font-size:18px}
+.photo{width:72px;height:72px;object-fit:cover;border-radius:8px;margin:4px}
+.statgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.stat{background:#f9fafb;padding:12px;border-radius:10px}.stat strong{display:block;font-size:22px;color:var(--red)}
+@media(min-width:600px){.tabs{grid-template-columns:repeat(5,1fr)}}
+</style>
+</head>
+<body>
+<header><div class="brand"><div class="logo">🛠️</div><div><h1>Artigiano 2.0</h1><div class="sub">Gestione interventi & agenda</div></div></div><span style="font-size:11px;color:#9ca3af">DEVICE</span></header>
+<main>
+<nav class="tabs">
+<button class="tab active" data-tab="agenda">Agenda</button><button class="tab" data-tab="calendar">Calendario</button><button class="tab" data-tab="clients">Clienti</button><button class="tab" data-tab="jobs">Lavori</button><button class="tab" data-tab="settings">Dati</button>
+</nav>
+<section id="agenda" class="panel active">
+<div class="card"><div class="row between"><div><h2>Agenda interventi</h2><div class="muted" id="todayLabel"></div></div><button class="btn small" onclick="openJob()">＋ Nuovo</button></div>
+<div class="statgrid" style="margin-top:12px"><div class="stat"><strong id="todayCount">0</strong><span class="muted">Interventi oggi</span></div><div class="stat"><strong id="ztlCount">0</strong><span class="muted">In ZTL</span></div></div>
+<div id="agendaList"></div></div>
+</section>
+<section id="calendar" class="panel"><div class="card"><div class="monthnav"><button class="btn light small" onclick="moveMonth(-1)">‹</button><h2 id="monthTitle" style="margin:0"></h2><button class="btn light small" onclick="moveMonth(1)">›</button></div><div class="calendar" id="calendarGrid"></div><hr><div id="selectedDayList" class="muted">Seleziona un giorno per vedere gli appuntamenti.</div></div></section>
+<section id="clients" class="panel"><div class="card"><div class="row between"><h2>Clienti</h2><button class="btn small" onclick="openClient()">＋ Cliente</button></div><input id="clientSearch" placeholder="Cerca nome, telefono o indirizzo…" oninput="renderClients()"><div id="clientsList"></div></div></section>
+<section id="jobs" class="panel"><div class="card"><div class="row between"><h2>Lavori e preventivi</h2><button class="btn small" onclick="openJob()">＋ Lavoro</button></div><div id="jobsList"></div></div></section>
+<section id="settings" class="panel">
+<div class="card"><h2>Archivio sul dispositivo</h2><p class="muted">I dati restano su questo dispositivo e in questo browser. Non vengono inviati a un server.</p><hr><div class="row"><button class="btn" onclick="exportBackup()">Esporta backup</button><button class="btn gray" onclick="document.getElementById('backupFile').click()">Ripristina backup</button><input id="backupFile" class="hidden" type="file" accept="application/json" onchange="importBackup(event)"></div><p class="muted" style="margin-top:10px">Fai regolarmente un backup e conservalo in un posto sicuro. Le foto sono incluse nel backup.</p></div>
+<div class="card"><h2>Informazioni</h2><p class="muted">Artigiano 2.0 · versione iniziale. Installabile come Web App quando pubblicata su un indirizzo HTTPS. La sincronizzazione tra dispositivi non è attiva.</p><button class="btn light" onclick="if(confirm('Vuoi cancellare TUTTI i dati salvati su questo dispositivo? Prima esporta un backup.')){db={clients:[],jobs:[]};save();renderAll()}">Cancella tutti i dati</button></div>
+</section>
+</main>
+<button class="bottom-add" onclick="openJob()" aria-label="Nuovo intervento">＋</button>
+<div class="modal" id="jobModal"><div class="modalbox"><div class="modalhead"><h2 id="jobModalTitle">Nuovo intervento</h2><button class="close" onclick="closeModal('jobModal')">×</button></div>
+<form id="jobForm">
+<input type="hidden" id="jobId">
+<div class="field"><label>Cliente</label><select id="jobClient" required></select></div>
+<div class="field"><label>Data</label><input type="date" id="jobDate" required></div>
+<div class="field"><label>Ora</label><input type="time" id="jobTime" value="09:00" required></div>
+<div class="field"><label>Tipo di lavoro</label><input id="jobType" placeholder="Es. apertura porta, cambio serratura…" required></div>
+<div class="field"><label>Indirizzo intervento</label><input id="jobAddress" placeholder="Via, numero civico, città"></div>
+<div class="field"><label>Piano / citofono</label><input id="jobFloor" placeholder="Es. 2° piano, interno 4"></div>
+<div class="field"><label>Telefono per questo intervento</label><input id="jobPhone" type="tel" placeholder="Numero cliente"></div>
+<div class="field"><label>Preventivo / importo (€)</label><input id="jobAmount" type="number" min="0" step="0.01" placeholder="Da definire"></div>
+<div class="field"><label>Stato</label><select id="jobStatus"><option>Da fare</option><option>Completato</option><option>Da preventivare</option><option>In attesa</option><option>Pagato</option></select></div>
+<div class="field"><label>Zona ZTL?</label><select id="jobZtl"><option value="no">No</option><option value="yes">Sì – attenzione varchi</option><option value="check">Da verificare</option></select></div>
+<div class="field"><label>Note</label><textarea id="jobNotes" placeholder="Dettagli, materiali, misure…"></textarea></div>
+<div class="field"><label>Fotografie (prima/dopo)</label><input id="jobPhotos" type="file" accept="image/*" multiple capture="environment"></div>
+<div id="existingPhotos"></div><div class="row"><button class="btn" type="submit">Salva intervento</button><button class="btn gray" type="button" onclick="closeModal('jobModal')">Annulla</button></div>
+</form></div></div>
+<div class="modal" id="clientModal"><div class="modalbox"><div class="modalhead"><h2 id="clientModalTitle">Nuovo cliente</h2><button class="close" onclick="closeModal('clientModal')">×</button></div>
+<form id="clientForm"><input type="hidden" id="clientId"><label>Nome e cognome / azienda</label><input id="clientName" required><label>Telefono</label><input id="clientPhone" type="tel"><label>Indirizzo</label><input id="clientAddress"><label>Email (facoltativa)</label><input id="clientEmail" type="email"><label>Note cliente</label><textarea id="clientNotes"></textarea><div class="row"><button class="btn" type="submit">Salva cliente</button><button class="btn gray" type="button" onclick="closeModal('clientModal')">Annulla</button></div></form></div></div>
+<script>
+const DBKEY='artigiano20_local_v1';
+let db={clients:[],jobs:[]}, monthCursor=new Date(), selectedDate=isoDate(new Date()), currentPhotos=[];
+function isoDate(d){return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-')}
+function load(){try{const x=localStorage.getItem(DBKEY);if(x)db=JSON.parse(x)}catch(e){alert('Errore nella lettura dei dati locali. Prova a ripristinare un backup.')} }
+function save(){try{localStorage.setItem(DBKEY,JSON.stringify(db))}catch(e){alert('Spazio di archiviazione insufficiente. Esporta un backup e riduci le foto.');}}
+function esc(s=''){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function money(v){return v!==''&&v!=null?'€ '+Number(v).toFixed(2).replace('.',','):'Da definire'}
+function switchTab(name){document.querySelectorAll('.panel').forEach(x=>x.classList.toggle('active',x.id===name));document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===name));if(name==='calendar')renderCalendar();if(name==='clients')renderClients();if(name==='jobs')renderJobs()}
+document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));
+function getClient(id){return db.clients.find(c=>c.id===id)}
+function jobCard(j){let c=getClient(j.clientId)||{};let z=j.ztl==='yes'?'<span class="tag">⚠ ZTL – verifica accesso</span>':j.ztl==='check'?'<span class="tag gray">ZTL da verificare</span>':'';let photos=(j.photos||[]).map(p=>`<img class="photo" src="${p}" alt="Foto lavoro">`).join('');let phone=j.phone||c.phone||'';return `<article class="job ${j.ztl==='yes'?'ztl':''}">${z}<div class="row between"><div class="job-title">${esc(j.time)} · ${esc(c.name||'Cliente')}</div><span class="tag ${j.status==='Pagato'?'green':'gray'}">${esc(j.status||'Da fare')}</span></div><p>📅 ${esc(j.date)} · 🔧 ${esc(j.type)}</p><p>📍 ${esc(j.address||c.address||'Indirizzo non indicato')} ${j.floor?'· '+esc(j.floor):''}</p><p>💶 ${money(j.amount)}</p>${j.notes?`<p>📝 ${esc(j.notes)}</p>`:''}${photos}<div class="row" style="margin-top:9px">${phone?`<a class="btn small" href="tel:${encodeURIComponent(phone)}">☎ Chiama</a><a class="btn green small" target="_blank" href="https://wa.me/${phone.replace(/\D/g,'')}">WhatsApp</a>`:''}${(j.address||c.address)?`<a class="btn blue small" target="_blank" href="https://maps.google.com/?q=${encodeURIComponent(j.address||c.address)}">Mappa</a>`:''}<button class="btn light small" onclick="editJob('${j.id}')">Modifica</button><button class="btn light small" onclick="deleteJob('${j.id}')">Elimina</button></div></article>`}
+function renderAgenda(){let today=isoDate(new Date()),arr=db.jobs.filter(j=>j.date===today).sort((a,b)=>a.time.localeCompare(b.time));document.getElementById('todayLabel').textContent=new Date().toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'});document.getElementById('todayCount').textContent=arr.length;document.getElementById('ztlCount').textContent=arr.filter(j=>j.ztl==='yes').length;document.getElementById('agendaList').innerHTML=arr.length?arr.map(jobCard).join(''):'<div class="empty">Nessun intervento programmato per oggi.<br>Usa + per aggiungerne uno.</div>'}
+function renderCalendar(){let y=monthCursor.getFullYear(),m=monthCursor.getMonth(),first=(new Date(y,m,1).getDay()+6)%7,days=new Date(y,m+1,0).getDate();document.getElementById('monthTitle').textContent=new Date(y,m,1).toLocaleDateString('it-IT',{month:'long',year:'numeric'});let html=['Lun','Mar','Mer','Gio','Ven','Sab','Dom'].map(x=>`<div class="dayhead">${x}</div>`).join('');for(let i=0;i<first;i++)html+='<div></div>';for(let d=1;d<=days;d++){let key=isoDate(new Date(y,m,d)),count=db.jobs.filter(j=>j.date===key).length;html+=`<button class="day ${key===isoDate(new Date())?'today':''} ${count?'has':''}" onclick="selectDay('${key}')">${d}${count?`<small>${count} lav.</small>`:''}</button>`}document.getElementById('calendarGrid').innerHTML=html;showSelected()}
+function moveMonth(n){monthCursor=new Date(monthCursor.getFullYear(),monthCursor.getMonth()+n,1);renderCalendar()}
+function selectDay(d){selectedDate=d;showSelected()}
+function showSelected(){let a=db.jobs.filter(j=>j.date===selectedDate).sort((x,y)=>x.time.localeCompare(y.time));document.getElementById('selectedDayList').innerHTML=`<h3>Interventi del ${new Date(selectedDate+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})}</h3>`+(a.length?a.map(jobCard).join(''):'Nessun intervento per questa data.')}
+function renderClients(){let q=(document.getElementById('clientSearch').value||'').toLowerCase();let a=db.clients.filter(c=>[c.name,c.phone,c.address].join(' ').toLowerCase().includes(q));document.getElementById('clientsList').innerHTML=a.length?a.map(c=>`<div class="job"><div class="job-title">${esc(c.name)}</div><p>☎ ${esc(c.phone||'—')} · 📍 ${esc(c.address||'—')}</p>${c.email?`<p>${esc(c.email)}</p>`:''}${c.notes?`<p>${esc(c.notes)}</p>`:''}<div class="row"><button class="btn light small" onclick="editClient('${c.id}')">Modifica</button><button class="btn light small" onclick="newJobFor('${c.id}')">＋ Intervento</button><button class="btn light small" onclick="deleteClient('${c.id}')">Elimina</button></div></div>`).join(''):'<div class="empty">Nessun cliente. Aggiungi il primo cliente.</div>'}
+function renderJobs(){let a=[...db.jobs].sort((x,y)=>(y.date+y.time).localeCompare(x.date+x.time));document.getElementById('jobsList').innerHTML=a.length?a.map(jobCard).join(''):'<div class="empty">Non hai ancora registrato lavori.</div>'}
+function renderAll(){renderAgenda();renderCalendar();renderClients();renderJobs()}
+function openModal(id){document.getElementById(id).classList.add('show')}function closeModal(id){document.getElementById(id).classList.remove('show')}
+function fillClientSelect(id){let s=document.getElementById('jobClient');s.innerHTML=db.clients.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');if(id)s.value=id}
+function openJob(clientId=''){if(!db.clients.length){if(confirm('Prima di creare un intervento devi inserire un cliente. Vuoi aggiungerlo adesso?'))openClient();return}document.getElementById('jobForm').reset();document.getElementById('jobId').value='';document.getElementById('jobDate').value=isoDate(new Date());document.getElementById('jobTime').value='09:00';document.getElementById('jobStatus').value='Da fare';document.getElementById('existingPhotos').innerHTML='';currentPhotos=[];fillClientSelect(clientId);document.getElementById('jobModalTitle').textContent='Nuovo intervento';openModal('jobModal')}
+function newJobFor(id){switchTab('agenda');openJob(id)}
+function openClient(){document.getElementById('clientForm').reset();document.getElementById('clientId').value='';document.getElementById('clientModalTitle').textContent='Nuovo cliente';openModal('clientModal')}
+function editClient(id){let c=getClient(id);if(!c)return;for(let [k,v] of Object.entries({clientId:c.id,clientName:c.name,clientPhone:c.phone,clientAddress:c.address,clientEmail:c.email,clientNotes:c.notes}))document.getElementById(k).value=v||'';document.getElementById('clientModalTitle').textContent='Modifica cliente';openModal('clientModal')}
+document.getElementById('clientForm').addEventListener('submit',e=>{e.preventDefault();let id=document.getElementById('clientId').value||String(Date.now()),c={id,name:document.getElementById('clientName').value.trim(),phone:document.getElementById('clientPhone').value.trim(),address:document.getElementById('clientAddress').value.trim(),email:document.getElementById('clientEmail').value.trim(),notes:document.getElementById('clientNotes').value.trim()};let i=db.clients.findIndex(x=>x.id===id);if(i>=0)db.clients[i]=c;else db.clients.push(c);save();closeModal('clientModal');renderAll()});
+function editJob(id){let j=db.jobs.find(x=>x.id===id);if(!j)return;fillClientSelect(j.clientId);let map={jobId:j.id,jobDate:j.date,jobTime:j.time,jobType:j.type,jobAddress:j.address,jobFloor:j.floor,jobPhone:j.phone,jobAmount:j.amount,jobStatus:j.status,jobZtl:j.ztl,jobNotes:j.notes};for(let [k,v] of Object.entries(map))document.getElementById(k).value=v??'';currentPhotos=j.photos||[];document.getElementById('existingPhotos').innerHTML=currentPhotos.map(p=>`<img class="photo" src="${p}">`).join('');document.getElementById('jobModalTitle').textContent='Modifica intervento';document.getElementById('jobPhotos').value='';openModal('jobModal')}
+document.getElementById('jobForm').addEventListener('submit',async e=>{e.preventDefault();let files=[...document.getElementById('jobPhotos').files];for(let f of files){if(f.size>3*1024*1024){alert('Ogni foto deve essere inferiore a 3 MB.');return}currentPhotos.push(await resizeImage(f))}let id=document.getElementById('jobId').value||String(Date.now()),j={id,clientId:document.getElementById('jobClient').value,date:document.getElementById('jobDate').value,time:document.getElementById('jobTime').value,type:document.getElementById('jobType').value.trim(),address:document.getElementById('jobAddress').value.trim(),floor:document.getElementById('jobFloor').value.trim(),phone:document.getElementById('jobPhone').value.trim(),amount:document.getElementById('jobAmount').value,status:document.getElementById('jobStatus').value,ztl:document.getElementById('jobZtl').value,notes:document.getElementById('jobNotes').value.trim(),photos:currentPhotos};let i=db.jobs.findIndex(x=>x.id===id);if(i>=0)db.jobs[i]=j;else db.jobs.push(j);save();closeModal('jobModal');renderAll()});
+function resizeImage(file){return new Promise((resolve,reject)=>{let r=new FileReader();r.onload=()=>{let im=new Image();im.onload=()=>{let max=1200,scale=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*scale);c.height=Math.round(im.height*scale);c.getContext('2d').drawImage(im,0,0,c.width,c.height);resolve(c.toDataURL('image/jpeg',.75))};im.onerror=reject;im.src=r.result};r.onerror=reject;r.readAsDataURL(file)})}
+function deleteJob(id){if(confirm('Eliminare questo intervento?')){db.jobs=db.jobs.filter(x=>x.id!==id);save();renderAll()}}
+function deleteClient(id){if(db.jobs.some(j=>j.clientId===id)){alert('Questo cliente ha interventi associati. Non puoi eliminarlo finché esistono lavori collegati.');return}if(confirm('Eliminare il cliente?')){db.clients=db.clients.filter(c=>c.id!==id);save();renderAll()}}
+function exportBackup(){let blob=new Blob([JSON.stringify({app:'Artigiano 2.0',version:1,exportedAt:new Date().toISOString(),data:db})],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='backup-artigiano-2.0-'+isoDate(new Date())+'.json';a.click();URL.revokeObjectURL(a.href)}
+function importBackup(e){let f=e.target.files[0];if(!f)return;let r=new FileReader();r.onload=()=>{try{let x=JSON.parse(r.result);if(!x.data||!Array.isArray(x.data.clients)||!Array.isArray(x.data.jobs))throw Error();if(confirm('Il ripristino sostituirà i dati attuali. Continuare?')){db=x.data;save();renderAll();alert('Backup ripristinato.')}}catch(err){alert('File di backup non valido.')}e.target.value=''};r.readAsText(f)}
+load();renderAll();
+if('serviceWorker'in navigator && location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(()=>{});
+</script>
+</body></html>

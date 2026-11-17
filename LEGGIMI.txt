@@ -1,0 +1,14 @@
+ARTIGIANO 2.0 - VERSIONE INIZIALE
+
+CONTENUTO
+- index.html: applicazione
+- manifest.json, sw.js, icon.svg: supporto installazione PWA
+
+COME PROVARLA
+Apri index.html con un browser moderno per provarla. Per installarla come vera Web App su iPhone serve pubblicare questi file su un indirizzo HTTPS (ad esempio GitHub Pages, gratuito), poi aprire l'indirizzo in Safari > Condividi > Aggiungi alla schermata Home.
+
+ARCHIVIAZIONE
+I dati vengono salvati nel localStorage del browser sul singolo dispositivo. Non c'è sincronizzazione tra dispositivi. Usa spesso Dati > Esporta backup. Conserva il file JSON in un posto sicuro. Il backup include anche le foto compresse.
+
+NOTA
+Questa è una prima versione operativa. Prima di inserirvi dati reali di clienti, fai prove ed esporta un backup. Il sistema non è un archivio cloud né un gestionale contabile/fiscale.
