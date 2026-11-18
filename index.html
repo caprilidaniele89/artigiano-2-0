@@ -75,15 +75,16 @@ hr{border:0;border-top:1px solid var(--line);margin:12px 0}.hidden{display:none!
 <textarea id="jobVoiceText" placeholder="Esempio: Domani alle 10, Mario Rossi, sostituzione cilindro a Pisa, durata un'ora, urgente"></textarea>
 </div>
 <input type="hidden" id="jobId">
-<div class="field"><label>Cliente</label><select id="jobClient" required></select></div>
+<div class="field"><label>Nome e cognome del cliente</label><input id="jobCustomerName" placeholder="Es. Mario Rossi" required></div>
+<div class="field"><label>Telefono cliente</label><input id="jobCustomerPhone" type="tel" placeholder="Numero di telefono"></div>
+<div class="field"><label>Indirizzo del cliente</label><input id="jobCustomerAddress" placeholder="Via, numero civico, città"></div>
+<div class="field"><label>Piano / interno / citofono</label><input id="jobCustomerFloor" placeholder="Es. 2° piano, interno 4"></div>
 <div class="field"><label>Data</label><input type="date" id="jobDate"></div>
 <div class="field"><label>Ora concordata</label><input type="time" id="jobTime" value="09:00"></div>
 <div class="field"><label>Durata prevista (minuti)</label><select id="jobDuration"><option value="30">30 minuti</option><option value="45">45 minuti</option><option value="60" selected>1 ora</option><option value="90">1 ora e 30</option><option value="120">2 ore</option><option value="180">3 ore</option><option value="240">4 ore</option></select></div>
 <div class="field"><label>Priorità</label><select id="jobPriority"><option value="normal">Normale</option><option value="urgent">Urgente</option><option value="schedule">Da programmare</option></select></div>
 <div class="field"><label>Tipo di lavoro</label><input id="jobType" placeholder="Es. apertura porta, cambio serratura…" required></div>
-<div class="field"><label>Indirizzo intervento</label><input id="jobAddress" placeholder="Via, numero civico, città"></div>
-<div class="field"><label>Piano / citofono</label><input id="jobFloor" placeholder="Es. 2° piano, interno 4"></div>
-<div class="field"><label>Telefono per questo intervento</label><input id="jobPhone" type="tel" placeholder="Numero cliente"></div>
+
 <hr><h3>💶 Preventivo e consuntivo</h3><p class="muted">Inserisci le voci di costo: il totale viene calcolato automaticamente. Puoi aggiornare gli importi a fine lavoro.</p>
 <div class="quote-grid"><div><label>Materiali / ricambi (€)</label><input id="jobMaterials" type="number" min="0" step="0.01" placeholder="0,00"></div><div><label>Manodopera (€)</label><input id="jobLabor" type="number" min="0" step="0.01" placeholder="0,00"></div><div><label>Uscita / spese (€)</label><input id="jobExpenses" type="number" min="0" step="0.01" placeholder="0,00"></div><div><label>Totale (€)</label><input id="jobAmount" type="number" min="0" step="0.01" placeholder="0,00"></div></div>
 <div class="row"><button class="btn light small" type="button" onclick="calculateJobTotal()">Calcola totale</button><button class="btn blue small" type="button" onclick="printJobQuote()">Anteprima / PDF</button></div>
@@ -96,7 +97,7 @@ hr{border:0;border-top:1px solid var(--line);margin:12px 0}.hidden{display:none!
 <div id="existingPhotos"></div><div class="row"><button class="btn" type="submit">Salva intervento</button><button class="btn gray" type="button" onclick="closeModal('jobModal')">Annulla</button></div>
 </form></div></div>
 <div class="modal" id="clientModal"><div class="modalbox"><div class="modalhead"><h2 id="clientModalTitle">Nuovo cliente</h2><button class="close" onclick="closeModal('clientModal')">×</button></div>
-<form id="clientForm"><input type="hidden" id="clientId"><label>Nome e cognome / azienda</label><input id="clientName" required><label>Telefono</label><input id="clientPhone" type="tel"><label>Indirizzo</label><input id="clientAddress"><label>Email (facoltativa)</label><input id="clientEmail" type="email"><label>Note cliente</label><textarea id="clientNotes"></textarea><hr><h3>📷 Archivio foto e video del cliente</h3><p class="muted">Aggiungi immagini e video da Foto, File o WhatsApp (prima salvali su Foto o File). Restano associati a questo cliente.</p><input id="clientMediaFiles" type="file" accept="image/*,video/*" multiple><div id="clientMediaPreview" class="client-media"></div><div class="row"><button class="btn" type="submit">Salva cliente</button><button class="btn gray" type="button" onclick="closeModal('clientModal')">Annulla</button></div></form></div></div>
+<form id="clientForm"><input type="hidden" id="clientId"><label>Nome e cognome / azienda</label><input id="clientName" required><label>Telefono</label><input id="clientPhone" type="tel"><label>Indirizzo</label><input id="clientAddress"><label>Piano / interno / citofono</label><input id="clientFloor"><label>Email (facoltativa)</label><input id="clientEmail" type="email"><label>Note cliente</label><textarea id="clientNotes"></textarea><hr><h3>📷 Archivio foto e video del cliente</h3><p class="muted">Aggiungi immagini e video da Foto, File o WhatsApp (prima salvali su Foto o File). Restano associati a questo cliente.</p><input id="clientMediaFiles" type="file" accept="image/*,video/*" multiple><div id="clientMediaPreview" class="client-media"></div><div class="row"><button class="btn" type="submit">Salva cliente</button><button class="btn gray" type="button" onclick="closeModal('clientModal')">Annulla</button></div></form></div></div>
 <script>
 const DBKEY='artigiano20_local_v2';
 const OLD_DBKEY='artigiano20_local_v1';
@@ -116,13 +117,13 @@ function money(v){return v!==''&&v!=null?'€ '+Number(v).toFixed(2).replace('.'
 function switchTab(name){document.querySelectorAll('.panel').forEach(x=>x.classList.toggle('active',x.id===name));document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x.dataset.tab===name));if(name==='calendar')renderCalendar();if(name==='clients')renderClients();if(name==='jobs')renderJobs();if(name==='settings')loadSettingsUI()}
 document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>switchTab(b.dataset.tab)));
 function getClient(id){return db.clients.find(c=>c.id===id)}
-function jobCard(j){let c=getClient(j.clientId)||{};let z=j.ztl==='yes'?'<span class="tag">⚠ ZTL – verifica accesso</span>':j.ztl==='check'?'<span class="tag gray">ZTL da verificare</span>':'';let pr=j.priority==='urgent'?'<span class="tag">URGENTE</span>':j.priority==='schedule'?'<span class="tag gray">DA PROGRAMMARE</span>':'<span class="tag green">NORMALE</span>';let photos=(j.photos||[]).map(p=>`<img class="photo" src="${p}" alt="Foto lavoro">`).join('');let phone=j.phone||c.phone||'';return `<article class="job ${j.ztl==='yes'?'ztl':''}">${pr} ${z}<div class="row between"><div class="job-title">${esc(j.time)} · ${esc(c.name||'Cliente')}</div><span class="tag ${j.status==='Pagato'?'green':'gray'}">${esc(j.status||'Da fare')}</span></div><p>📅 ${esc(j.date||'Da programmare')} ${j.time?'· '+esc(j.time):''} · 🔧 ${esc(j.type)} · ⏱ ${Number(j.duration||60)} min</p><p>📍 ${esc(j.address||c.address||'Indirizzo non indicato')} ${j.floor?'· '+esc(j.floor):''}</p><p>💶 ${money(j.amount)}</p>${j.notes?`<p>📝 ${esc(j.notes)}</p>`:''}${photos}<div class="row" style="margin-top:9px">${phone?`<a class="btn small" href="tel:${encodeURIComponent(phone)}">☎ Chiama</a><a class="btn green small" target="_blank" href="https://wa.me/${phone.replace(/\D/g,'')}">WhatsApp</a>`:''}${(j.address||c.address)?`<a class="btn blue small" target="_blank" href="https://maps.google.com/?q=${encodeURIComponent(j.address||c.address)}">Mappa</a>`:''}<button class="btn light small" onclick="editJob('${j.id}')">Modifica</button><button class="btn blue small" onclick="printJobQuote('${j.id}')">PDF</button><button class="btn light small" onclick="downloadJobCalendar('${j.id}')">＋ Calendario</button><button class="btn light small" onclick="deleteJob('${j.id}')">Elimina</button></div></article>`}
+function jobCard(j){let c=getClient(j.clientId)||{};let z=j.ztl==='yes'?'<span class="tag">⚠ ZTL – verifica accesso</span>':j.ztl==='check'?'<span class="tag gray">ZTL da verificare</span>':'';let pr=j.priority==='urgent'?'<span class="tag">URGENTE</span>':j.priority==='schedule'?'<span class="tag gray">DA PROGRAMMARE</span>':'<span class="tag green">NORMALE</span>';let photos=(j.photos||[]).map(p=>`<img class="photo" src="${p}" alt="Foto lavoro">`).join('');let phone=j.customerPhone||j.phone||c.phone||'';return `<article class="job ${j.ztl==='yes'?'ztl':''}">${pr} ${z}<div class="row between"><div class="job-title">${esc(j.time)} · ${esc(j.customerName||c.name||'Cliente')}</div><span class="tag ${j.status==='Pagato'?'green':'gray'}">${esc(j.status||'Da fare')}</span></div><p>📅 ${esc(j.date||'Da programmare')} ${j.time?'· '+esc(j.time):''} · 🔧 ${esc(j.type)} · ⏱ ${Number(j.duration||60)} min</p><p>📍 ${esc(j.address||c.address||'Indirizzo non indicato')} ${j.floor?'· '+esc(j.floor):''}</p><p>💶 ${money(j.amount)}</p>${j.notes?`<p>📝 ${esc(j.notes)}</p>`:''}${photos}<div class="row" style="margin-top:9px">${phone?`<a class="btn small" href="tel:${encodeURIComponent(phone)}">☎ Chiama</a><a class="btn green small" target="_blank" href="https://wa.me/${phone.replace(/\D/g,'')}">WhatsApp</a>`:''}${(j.address||c.address)?`<a class="btn blue small" target="_blank" href="https://maps.google.com/?q=${encodeURIComponent(j.address||c.address)}">Mappa</a>`:''}<button class="btn light small" onclick="editJob('${j.id}')">Modifica</button><button class="btn blue small" onclick="printJobQuote('${j.id}')">PDF</button><button class="btn light small" onclick="downloadJobCalendar('${j.id}')">＋ Calendario</button><button class="btn light small" onclick="deleteJob('${j.id}')">Elimina</button></div></article>`}
 function renderAgenda(){let today=isoDate(new Date()),arr=db.jobs.filter(j=>j.date===today).sort((a,b)=>a.time.localeCompare(b.time));document.getElementById('todayLabel').textContent=new Date().toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'});document.getElementById('todayCount').textContent=arr.length;document.getElementById('ztlCount').textContent=arr.filter(j=>j.ztl==='yes').length;let uns=db.jobs.filter(j=>j.priority==='schedule'||!j.date);document.getElementById('agendaList').innerHTML=(arr.length?arr.map(jobCard).join(''):'<div class="empty">Nessun intervento programmato per oggi.<br>Usa + per aggiungerne uno.</div>')+(uns.length?'<hr><h3>Da programmare</h3>'+uns.map(jobCard).join(''):'')}
 function renderCalendar(){let y=monthCursor.getFullYear(),m=monthCursor.getMonth(),first=(new Date(y,m,1).getDay()+6)%7,days=new Date(y,m+1,0).getDate();document.getElementById('monthTitle').textContent=new Date(y,m,1).toLocaleDateString('it-IT',{month:'long',year:'numeric'});let html=['Lun','Mar','Mer','Gio','Ven','Sab','Dom'].map(x=>`<div class="dayhead">${x}</div>`).join('');for(let i=0;i<first;i++)html+='<div></div>';for(let d=1;d<=days;d++){let key=isoDate(new Date(y,m,d)),count=db.jobs.filter(j=>j.date===key).length;html+=`<button class="day ${key===isoDate(new Date())?'today':''} ${count?'has':''}" onclick="selectDay('${key}')">${d}${count?`<small>${count} lav.</small>`:''}</button>`}document.getElementById('calendarGrid').innerHTML=html;showSelected()}
 function moveMonth(n){monthCursor=new Date(monthCursor.getFullYear(),monthCursor.getMonth()+n,1);renderCalendar()}
 function selectDay(d){selectedDate=d;showSelected()}
 function showSelected(){let a=db.jobs.filter(j=>j.date===selectedDate).sort((x,y)=>x.time.localeCompare(y.time));document.getElementById('selectedDayList').innerHTML=`<h3>Interventi del ${new Date(selectedDate+'T12:00:00').toLocaleDateString('it-IT',{day:'numeric',month:'long',year:'numeric'})}</h3>`+(a.length?a.map(jobCard).join(''):'Nessun intervento per questa data.')}
-function renderClients(){let q=(document.getElementById('clientSearch').value||'').toLowerCase();let a=db.clients.filter(c=>[c.name,c.phone,c.address].join(' ').toLowerCase().includes(q));document.getElementById('clientsList').innerHTML=a.length?a.map(c=>`<div class="job"><div class="job-title">${esc(c.name)}</div><p>☎ ${esc(c.phone||'—')} · 📍 ${esc(c.address||'—')}</p>${c.email?`<p>${esc(c.email)}</p>`:''}${c.notes?`<p>${esc(c.notes)}</p>`:''}<p class="muted">📷 ${(c.media||[]).length} file multimediali salvati</p><div class="row"><button class="btn light small" onclick="editClient('${c.id}')">Apri scheda / media</button><button class="btn light small" onclick="newJobFor('${c.id}')">＋ Intervento</button><button class="btn light small" onclick="deleteClient('${c.id}')">Elimina</button></div></div>`).join(''):'<div class="empty">Nessun cliente. Aggiungi il primo cliente.</div>'}
+function renderClients(){let q=(document.getElementById('clientSearch').value||'').toLowerCase();let a=db.clients.filter(c=>[c.name,c.phone,c.address].join(' ').toLowerCase().includes(q));document.getElementById('clientsList').innerHTML=a.length?a.map(c=>`<div class="job"><div class="job-title">${esc(c.name)}</div><p>☎ ${esc(c.phone||'—')} · 📍 ${esc(c.address||'—')} ${c.floor?'· '+esc(c.floor):''}</p>${c.email?`<p>${esc(c.email)}</p>`:''}${c.notes?`<p>${esc(c.notes)}</p>`:''}<p class="muted">📷 ${(c.media||[]).length} file multimediali salvati</p><div class="row"><button class="btn light small" onclick="editClient('${c.id}')">Apri scheda / media</button><button class="btn light small" onclick="newJobFor('${c.id}')">＋ Intervento</button><button class="btn light small" onclick="deleteClient('${c.id}')">Elimina</button></div></div>`).join(''):'<div class="empty">Nessun cliente. Aggiungi il primo cliente.</div>'}
 function renderJobs(){let a=[...db.jobs].sort((x,y)=>(y.date+y.time).localeCompare(x.date+x.time));document.getElementById('jobsList').innerHTML=a.length?a.map(jobCard).join(''):'<div class="empty">Non hai ancora registrato lavori.</div>'}
 function renderAll(){renderAgenda();renderCalendar();renderClients();renderJobs()}
 function openModal(id){document.getElementById(id).classList.add('show')}function closeModal(id){document.getElementById(id).classList.remove('show')}
@@ -133,20 +134,135 @@ function loadSignature(data){clearSignature();if(!data)return;let im=new Image()
 function calculateJobTotal(){let sum=['jobMaterials','jobLabor','jobExpenses'].reduce((n,id)=>n+Number(document.getElementById(id).value||0),0);document.getElementById('jobAmount').value=sum.toFixed(2)}
 ['jobMaterials','jobLabor','jobExpenses'].forEach(id=>document.getElementById(id).addEventListener('input',calculateJobTotal));
 function euro(v){return '€ '+Number(v||0).toFixed(2).replace('.',',')}
-function printJobQuote(id){let j=id?db.jobs.find(x=>x.id===id):null;if(!j){let form=document.getElementById('jobForm');if(!form.reportValidity())return;j={clientId:document.getElementById('jobClient').value,type:document.getElementById('jobType').value,date:document.getElementById('jobDate').value,time:document.getElementById('jobTime').value,address:document.getElementById('jobAddress').value,materials:document.getElementById('jobMaterials').value,labor:document.getElementById('jobLabor').value,expenses:document.getElementById('jobExpenses').value,amount:document.getElementById('jobAmount').value,notes:document.getElementById('jobNotes').value,signature:currentSignature,status:document.getElementById('jobStatus').value}}let c=getClient(j.clientId)||{},total=j.amount!==''&&j.amount!=null?Number(j.amount):Number(j.materials||0)+Number(j.labor||0)+Number(j.expenses||0);let w=window.open('','_blank');if(!w){alert('Consenti l’apertura del documento per creare il PDF.');return}w.document.write(`<!doctype html><html lang="it"><meta charset="utf-8"><title>Preventivo - Artigiano 2.0</title><style>body{font:15px Arial;padding:32px;color:#222}h1{font-size:24px}table{width:100%;border-collapse:collapse;margin:22px 0}td,th{padding:12px;border-bottom:1px solid #ddd;text-align:left}.total{font-size:22px;font-weight:bold;text-align:right}.sig{max-width:280px;max-height:100px;border-bottom:1px solid #aaa}small{color:#666}@media print{button{display:none}}</style><h1>Artigiano 2.0</h1><h2>${esc(j.type||'Preventivo / consuntivo')}</h2><p><b>Cliente:</b> ${esc(c.name||'')}</p><p><b>Telefono:</b> ${esc(c.phone||'')} &nbsp; <b>Indirizzo:</b> ${esc(j.address||c.address||'')}</p><p><b>Data intervento:</b> ${esc(j.date||'')} ${esc(j.time||'')}</p><table><tr><th>Voce</th><th>Importo</th></tr><tr><td>Materiali / ricambi</td><td>${euro(j.materials)}</td></tr><tr><td>Manodopera</td><td>${euro(j.labor)}</td></tr><tr><td>Uscita / spese</td><td>${euro(j.expenses)}</td></tr></table><p class="total">Totale: ${euro(total)}</p><p><b>Note:</b> ${esc(j.notes||'')}</p>${j.signature?'<h3>Firma cliente</h3><img class="sig" src="'+j.signature+'">':''}<p><small>Documento generato da Artigiano 2.0. Verificare i dati prima della consegna.</small></p><button onclick="window.print()">Stampa / Salva PDF</button></html>`);w.document.close()}
+function printJobQuote(id){
+ let j=id?db.jobs.find(x=>x.id===id):null;
+ if(!j){
+  let form=document.getElementById('jobForm');
+  if(!form.reportValidity())return;
+  j={
+   customerName:document.getElementById('jobCustomerName').value.trim(),
+   customerPhone:document.getElementById('jobCustomerPhone').value.trim(),
+   clientId:'',
+   type:document.getElementById('jobType').value,
+   date:document.getElementById('jobDate').value,
+   time:document.getElementById('jobTime').value,
+   address:document.getElementById('jobCustomerAddress').value,
+   floor:document.getElementById('jobCustomerFloor').value,
+   materials:document.getElementById('jobMaterials').value,
+   labor:document.getElementById('jobLabor').value,
+   expenses:document.getElementById('jobExpenses').value,
+   amount:document.getElementById('jobAmount').value,
+   notes:document.getElementById('jobNotes').value,
+   signature:currentSignature,
+   status:document.getElementById('jobStatus').value
+  };
+ }
+ let c=getClient(j.clientId)||{};
+ let cname=j.customerName||c.name||'', cphone=j.customerPhone||j.phone||c.phone||'';
+ let total=j.amount!==''&&j.amount!=null?Number(j.amount):Number(j.materials||0)+Number(j.labor||0)+Number(j.expenses||0);
+ let w=window.open('','_blank');
+ if(!w){alert('Consenti l’apertura del documento per creare il PDF.');return}
+ w.document.write(`<!doctype html><html lang="it"><meta charset="utf-8"><title>Preventivo - Artigiano 2.0</title><style>body{font:15px Arial;padding:32px;color:#222}h1{font-size:24px}table{width:100%;border-collapse:collapse;margin:22px 0}td,th{padding:12px;border-bottom:1px solid #ddd;text-align:left}.total{font-size:22px;font-weight:bold;text-align:right}.sig{max-width:280px;max-height:100px;border-bottom:1px solid #aaa}small{color:#666}@media print{button{display:none}}</style><h1>Artigiano 2.0</h1><h2>${esc(j.type||'Preventivo / consuntivo')}</h2><p><b>Cliente:</b> ${esc(cname)}</p><p><b>Telefono:</b> ${esc(cphone)} &nbsp; <b>Indirizzo:</b> ${esc(j.address||c.address||'')} ${esc(j.floor||c.floor||'')}</p><p><b>Data intervento:</b> ${esc(j.date||'')} ${esc(j.time||'')}</p><table><tr><th>Voce</th><th>Importo</th></tr><tr><td>Materiali / ricambi</td><td>${euro(j.materials)}</td></tr><tr><td>Manodopera</td><td>${euro(j.labor)}</td></tr><tr><td>Uscita / spese</td><td>${euro(j.expenses)}</td></tr></table><p class="total">Totale: ${euro(total)}</p><p><b>Note:</b> ${esc(j.notes||'')}</p>${j.signature?'<h3>Firma cliente</h3><img class="sig" src="'+j.signature+'">':''}<p><small>Documento generato da Artigiano 2.0. Verificare i dati prima della consegna.</small></p><button onclick="window.print()">Stampa / Salva PDF</button></html>`);
+ w.document.close();
+}
 function downloadJobCalendar(id){let j=db.jobs.find(x=>x.id===id);if(!j||!j.date||!j.time){alert('Per creare il promemoria Calendario inserisci prima data e ora dell’intervento.');return}let start=j.date.replace(/-/g,'')+'T'+j.time.replace(':','')+'00',d=new Date(j.date+'T'+j.time),end=new Date(d.getTime()+Number(j.duration||60)*60000),fmt=x=>x.getFullYear()+String(x.getMonth()+1).padStart(2,'0')+String(x.getDate()).padStart(2,'0')+'T'+String(x.getHours()).padStart(2,'0')+String(x.getMinutes()).padStart(2,'0')+'00',c=getClient(j.clientId)||{},alarm=Number(j.reminder||30);let ics=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Artigiano 2.0//IT','BEGIN:VEVENT','UID:'+id+'@artigiano20','DTSTAMP:'+fmt(new Date()),'DTSTART:'+start,'DTEND:'+fmt(end),'SUMMARY:'+('Intervento: '+(c.name||'Cliente')+' - '+(j.type||'Lavoro')).replace(/[,;\\]/g,' '),'LOCATION:'+String(j.address||c.address||'').replace(/[,;\\]/g,' '),'DESCRIPTION:'+String(j.notes||'').replace(/\n/g,' ').replace(/[,;\\]/g,' '),'BEGIN:VALARM','TRIGGER:-PT'+alarm+'M','ACTION:DISPLAY','DESCRIPTION:Promemoria intervento Artigiano 2.0','END:VALARM','END:VEVENT','END:VCALENDAR'].join('\r\n');let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([ics],{type:'text/calendar;charset=utf-8'}));a.download='intervento-'+j.date+'.ics';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
 async function enableNotifications(){if(!('Notification'in window)){alert('Le notifiche non sono supportate da questo browser. Usa Aggiungi al Calendario per gli avvisi.');return}let p=await Notification.requestPermission();document.getElementById('notificationStatus').textContent=p==='granted'?'Notifiche consentite. Gli avvisi vengono controllati quando l’app è aperta.':'Permesso notifiche non concesso.';checkUpcomingReminders()}
 function checkUpcomingReminders(){if(!('Notification'in window)||Notification.permission!=='granted')return;let now=Date.now();for(let j of db.jobs){if(!j.date||!j.time||!j.reminder||j.status==='Completato'||j.status==='Pagato')continue;let due=new Date(j.date+'T'+j.time).getTime()-Number(j.reminder)*60000;if(due<=now&&due>now-10*60000&&j.notifiedKey!==j.date+' '+j.time){let c=getClient(j.clientId)||{};new Notification('Promemoria intervento',{body:(c.name||'Cliente')+' · '+(j.type||'Lavoro')+' alle '+j.time});j.notifiedKey=j.date+' '+j.time;save()}}}
 
-function fillClientSelect(id){let s=document.getElementById('jobClient');s.innerHTML=db.clients.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('');if(id)s.value=id}
-function openJob(clientId=''){if(!db.clients.length){if(confirm('Prima di creare un intervento devi inserire un cliente. Vuoi aggiungerlo adesso?'))openClient();return}document.getElementById('jobForm').reset();document.getElementById('jobId').value='';document.getElementById('jobDate').value=isoDate(new Date());document.getElementById('jobTime').value='09:00';document.getElementById('jobDuration').value='60';document.getElementById('jobPriority').value='normal';document.getElementById('jobStatus').value='Da fare';document.getElementById('jobReminder').value='30';document.getElementById('existingPhotos').innerHTML='';currentPhotos=[];currentSignature='';clearSignature();fillClientSelect(clientId);document.getElementById('jobModalTitle').textContent='Nuovo intervento';openModal('jobModal')}
+function fillClientSelect(id){let c=getClient(id);if(c){document.getElementById('jobCustomerName').value=c.name||'';document.getElementById('jobCustomerPhone').value=c.phone||'';document.getElementById('jobCustomerAddress').value=c.address||'';document.getElementById('jobCustomerFloor').value=c.floor||''}}
+function openJob(clientId=''){
+ document.getElementById('jobForm').reset();
+ document.getElementById('jobId').value='';
+ document.getElementById('jobDate').value=isoDate(new Date());
+ document.getElementById('jobTime').value='09:00';
+ document.getElementById('jobDuration').value='60';
+ document.getElementById('jobPriority').value='normal';
+ document.getElementById('jobStatus').value='Da fare';
+ document.getElementById('jobReminder').value='30';
+ document.getElementById('existingPhotos').innerHTML='';
+ document.getElementById('jobVoiceText').value='';
+ document.getElementById('voiceStatus').textContent='';
+ currentPhotos=[];currentSignature='';clearSignature();
+ if(clientId)fillClientSelect(clientId);
+ document.getElementById('jobModalTitle').textContent='Nuovo intervento';
+ openModal('jobModal');
+}
 function newJobFor(id){switchTab('agenda');openJob(id)}
 function openClient(){document.getElementById('clientForm').reset();document.getElementById('clientId').value='';currentClientMedia=[];document.getElementById('clientMediaPreview').innerHTML='';document.getElementById('clientModalTitle').textContent='Nuovo cliente';openModal('clientModal')}
-async function editClient(id){let c=getClient(id);if(!c)return;for(let [k,v] of Object.entries({clientId:c.id,clientName:c.name,clientPhone:c.phone,clientAddress:c.address,clientEmail:c.email,clientNotes:c.notes}))document.getElementById(k).value=v||'';currentClientMedia=(c.media||[]).slice();document.getElementById('clientMediaFiles').value='';await renderClientMediaPreview();document.getElementById('clientModalTitle').textContent='Modifica cliente';openModal('clientModal')}
+async function editClient(id){let c=getClient(id);if(!c)return;for(let [k,v] of Object.entries({clientId:c.id,clientName:c.name,clientPhone:c.phone,clientAddress:c.address,clientFloor:c.floor,clientEmail:c.email,clientNotes:c.notes}))document.getElementById(k).value=v||'';currentClientMedia=(c.media||[]).slice();document.getElementById('clientMediaFiles').value='';await renderClientMediaPreview();document.getElementById('clientModalTitle').textContent='Modifica cliente';openModal('clientModal')}
 async function renderClientMediaPreview(){let el=document.getElementById('clientMediaPreview');el.innerHTML='';for(let id of currentClientMedia){let m=await getMedia(id);if(!m)continue;let url=URL.createObjectURL(m.blob),item=document.createElement('div');item.className='media-item';let media=m.type.startsWith('video/')?document.createElement('video'):document.createElement('img');media.src=url;if(media.tagName==='VIDEO'){media.controls=true;media.playsInline=true}item.appendChild(media);let b=document.createElement('button');b.type='button';b.className='btn light small';b.textContent='Rimuovi';b.onclick=async()=>{currentClientMedia=currentClientMedia.filter(x=>x!==id);await removeMedia(id);renderClientMediaPreview()};item.appendChild(b);el.appendChild(item)}}
-document.getElementById('clientForm').addEventListener('submit',async e=>{e.preventDefault();let id=document.getElementById('clientId').value||String(Date.now()),files=[...document.getElementById('clientMediaFiles').files];for(let f of files){if(!f.type.startsWith('image/')&&!f.type.startsWith('video/'))continue;if(f.size>(f.type.startsWith('video/')?25:8)*1024*1024){alert('Limite per file: 8 MB per foto e 25 MB per video.');return}}try{for(let f of files){let blob=f;if(f.type.startsWith('image/')){let data=await resizeImage(f);blob=await dataURLBlob(data)}let mid=id+'_'+Date.now()+'_'+Math.random().toString(36).slice(2);await putMedia(mid,blob,f.name,f.type);currentClientMedia.push(mid)}}catch(err){alert('Non riesco a salvare uno dei file selezionati. Controlla lo spazio disponibile.');return}let c={id,name:document.getElementById('clientName').value.trim(),phone:document.getElementById('clientPhone').value.trim(),address:document.getElementById('clientAddress').value.trim(),email:document.getElementById('clientEmail').value.trim(),notes:document.getElementById('clientNotes').value.trim(),media:currentClientMedia};let i=db.clients.findIndex(x=>x.id===id);if(i>=0)db.clients[i]=c;else db.clients.push(c);save();closeModal('clientModal');renderAll()});
-function editJob(id){let j=db.jobs.find(x=>x.id===id);if(!j)return;fillClientSelect(j.clientId);let map={jobId:j.id,jobDate:j.date,jobTime:j.time,jobDuration:j.duration||60,jobPriority:j.priority||'normal',jobType:j.type,jobAddress:j.address,jobFloor:j.floor,jobPhone:j.phone,jobMaterials:j.materials,jobLabor:j.labor,jobExpenses:j.expenses,jobAmount:j.amount,jobStatus:j.status,jobZtl:j.ztl,jobNotes:j.notes,jobReminder:j.reminder||0};for(let [k,v] of Object.entries(map))document.getElementById(k).value=v??'';currentPhotos=j.photos||[];document.getElementById('existingPhotos').innerHTML=currentPhotos.map(p=>`<img class="photo" src="${p}">`).join('');loadSignature(j.signature||'');document.getElementById('jobModalTitle').textContent='Modifica intervento';document.getElementById('jobPhotos').value='';openModal('jobModal')}
-document.getElementById('jobForm').addEventListener('submit',async e=>{e.preventDefault();if(document.getElementById('jobPriority').value!=='schedule'&&(!document.getElementById('jobDate').value||!document.getElementById('jobTime').value)){alert('Per un lavoro normale o urgente inserisci data e ora. Per lasciarlo senza appuntamento scegli Da programmare.');return}let files=[...document.getElementById('jobPhotos').files];for(let f of files){if(f.size>3*1024*1024){alert('Ogni foto deve essere inferiore a 3 MB.');return}currentPhotos.push(await resizeImage(f))}let id=document.getElementById('jobId').value||String(Date.now()),j={id,clientId:document.getElementById('jobClient').value,date:document.getElementById('jobPriority').value==='schedule'?'':document.getElementById('jobDate').value,time:document.getElementById('jobPriority').value==='schedule'?'':document.getElementById('jobTime').value,duration:Number(document.getElementById('jobDuration').value||60),priority:document.getElementById('jobPriority').value,type:document.getElementById('jobType').value.trim(),address:document.getElementById('jobAddress').value.trim(),floor:document.getElementById('jobFloor').value.trim(),phone:document.getElementById('jobPhone').value.trim(),materials:document.getElementById('jobMaterials').value,labor:document.getElementById('jobLabor').value,expenses:document.getElementById('jobExpenses').value,amount:document.getElementById('jobAmount').value,signature:currentSignature,reminder:Number(document.getElementById('jobReminder').value||0),notifiedKey:(db.jobs.find(x=>x.id===id)||{}).notifiedKey||'',status:document.getElementById('jobStatus').value,ztl:document.getElementById('jobZtl').value,notes:document.getElementById('jobNotes').value.trim(),photos:currentPhotos};let i=db.jobs.findIndex(x=>x.id===id);if(i>=0)db.jobs[i]=j;else db.jobs.push(j);save();closeModal('jobModal');renderAll()});
+document.getElementById('clientForm').addEventListener('submit',async e=>{e.preventDefault();let id=document.getElementById('clientId').value||String(Date.now()),files=[...document.getElementById('clientMediaFiles').files];for(let f of files){if(!f.type.startsWith('image/')&&!f.type.startsWith('video/'))continue;if(f.size>(f.type.startsWith('video/')?25:8)*1024*1024){alert('Limite per file: 8 MB per foto e 25 MB per video.');return}}try{for(let f of files){let blob=f;if(f.type.startsWith('image/')){let data=await resizeImage(f);blob=await dataURLBlob(data)}let mid=id+'_'+Date.now()+'_'+Math.random().toString(36).slice(2);await putMedia(mid,blob,f.name,f.type);currentClientMedia.push(mid)}}catch(err){alert('Non riesco a salvare uno dei file selezionati. Controlla lo spazio disponibile.');return}let previous=db.clients.find(x=>x.id===id)||{};let c={...previous,id,name:document.getElementById('clientName').value.trim(),phone:document.getElementById('clientPhone').value.trim(),address:document.getElementById('clientAddress').value.trim(),floor:document.getElementById('clientFloor').value.trim(),email:document.getElementById('clientEmail').value.trim(),notes:document.getElementById('clientNotes').value.trim(),media:currentClientMedia};let i=db.clients.findIndex(x=>x.id===id);if(i>=0)db.clients[i]=c;else db.clients.push(c);save();closeModal('clientModal');renderAll()});
+function editJob(id){
+ let j=db.jobs.find(x=>x.id===id);if(!j)return;
+ let c=getClient(j.clientId)||{};
+ let map={
+  jobId:j.id,jobDate:j.date,jobTime:j.time,jobDuration:j.duration||60,
+  jobPriority:j.priority||'normal',jobType:j.type,
+  jobCustomerName:j.customerName||c.name||'',
+  jobCustomerPhone:j.customerPhone||j.phone||c.phone||'',
+  jobCustomerAddress:j.address||c.address||'',
+  jobCustomerFloor:j.floor||c.floor||'',
+  jobMaterials:j.materials,jobLabor:j.labor,jobExpenses:j.expenses,
+  jobAmount:j.amount,jobStatus:j.status,jobZtl:j.ztl,jobNotes:j.notes,
+  jobReminder:j.reminder||0
+ };
+ for(let [k,v] of Object.entries(map))document.getElementById(k).value=v??'';
+ currentPhotos=j.photos||[];
+ document.getElementById('existingPhotos').innerHTML=currentPhotos.map(p=>`<img class="photo" src="${p}">`).join('');
+ loadSignature(j.signature||'');
+ document.getElementById('jobPhotos').value='';
+ document.getElementById('jobVoiceText').value='';
+ document.getElementById('voiceStatus').textContent='';
+ document.getElementById('jobModalTitle').textContent='Modifica intervento';
+ openModal('jobModal');
+}
+document.getElementById('jobForm').addEventListener('submit',async e=>{
+ e.preventDefault();
+ let priority=document.getElementById('jobPriority').value;
+ if(priority!=='schedule'&&(!document.getElementById('jobDate').value||!document.getElementById('jobTime').value)){
+  alert('Per un lavoro normale o urgente inserisci data e ora. Per lasciarlo senza appuntamento scegli Da programmare.');return;
+ }
+ const name=document.getElementById('jobCustomerName').value.trim();
+ if(!name){alert('Inserisci nome e cognome del cliente.');return}
+ let files=[...document.getElementById('jobPhotos').files];
+ for(let f of files){if(f.size>3*1024*1024){alert('Ogni foto deve essere inferiore a 3 MB.');return}}
+ try{for(let f of files)currentPhotos.push(await resizeImage(f))}
+ catch(err){alert('Non riesco a elaborare una delle foto selezionate.');return}
+ let id=document.getElementById('jobId').value||String(Date.now());
+ const norm=x=>(x||'').toLocaleLowerCase('it-IT').replace(/[^a-zà-ÿ0-9 ]/g,'').replace(/\s+/g,' ').trim();
+ const phone=document.getElementById('jobCustomerPhone').value.trim();
+ const address=document.getElementById('jobCustomerAddress').value.trim();
+ const floor=document.getElementById('jobCustomerFloor').value.trim();
+ let previousJob=db.jobs.find(x=>x.id===id)||{};
+ let linked=db.clients.find(c=>c.id===previousJob.clientId)||db.clients.find(c=>norm(c.name)===norm(name)&&(!phone||!c.phone||c.phone===phone));
+ let clientId=linked?linked.id:String(Date.now())+'_client';
+ if(linked){
+  linked.name=name;linked.phone=phone;linked.address=address;linked.floor=floor;
+ }else{
+  db.clients.push({id:clientId,name,phone,address,floor,email:'',notes:'',media:[]});
+ }
+ let j={
+  ...previousJob,id,clientId,customerName:name,customerPhone:phone,
+  date:priority==='schedule'?'':document.getElementById('jobDate').value,
+  time:priority==='schedule'?'':document.getElementById('jobTime').value,
+  duration:Number(document.getElementById('jobDuration').value||60),priority,
+  type:document.getElementById('jobType').value.trim(),address,floor,phone,
+  materials:document.getElementById('jobMaterials').value,
+  labor:document.getElementById('jobLabor').value,
+  expenses:document.getElementById('jobExpenses').value,
+  amount:document.getElementById('jobAmount').value,
+  signature:currentSignature,
+  reminder:Number(document.getElementById('jobReminder').value||0),
+  notifiedKey:previousJob.notifiedKey||'',
+  status:document.getElementById('jobStatus').value,
+  ztl:document.getElementById('jobZtl').value,
+  notes:document.getElementById('jobNotes').value.trim(),
+  photos:currentPhotos
+ };
+ let i=db.jobs.findIndex(x=>x.id===id);
+ if(i>=0)db.jobs[i]=j;else db.jobs.push(j);
+ save();closeModal('jobModal');renderAll();
+});
 function resizeImage(file){return new Promise((resolve,reject)=>{let r=new FileReader();r.onload=()=>{let im=new Image();im.onload=()=>{let max=1200,scale=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*scale);c.height=Math.round(im.height*scale);c.getContext('2d').drawImage(im,0,0,c.width,c.height);resolve(c.toDataURL('image/jpeg',.75))};im.onerror=reject;im.src=r.result};r.onerror=reject;r.readAsDataURL(file)})}
 function deleteJob(id){if(confirm('Eliminare questo intervento?')){db.jobs=db.jobs.filter(x=>x.id!==id);save();renderAll()}}
 async function deleteClient(id){if(db.jobs.some(j=>j.clientId===id)){alert('Questo cliente ha interventi associati. Non puoi eliminarlo finché esistono lavori collegati.');return}if(confirm('Eliminare il cliente e tutti i suoi file multimediali?')){let c=getClient(id);for(let mid of (c.media||[]))await removeMedia(mid);db.clients=db.clients.filter(c=>c.id!==id);save();renderAll()}}
@@ -189,35 +305,56 @@ function startJobVoice(){
 function parseJobVoice(){
  const raw=(document.getElementById('jobVoiceText').value||'').trim();
  if(!raw){alert('Prima detta o scrivi una frase che descriva l’intervento.');return}
- const parts=raw.split(/[,;]+/).map(x=>x.trim()).filter(Boolean);
  const lower=raw.toLocaleLowerCase('it-IT');
  const today=new Date();let date=new Date(today.getFullYear(),today.getMonth(),today.getDate());
- if(/\b(dopodomani)\b/.test(lower))date.setDate(date.getDate()+2);else if(/\b(domani)\b/.test(lower))date.setDate(date.getDate()+1);
- let dm=lower.match(/\b(\d{1,2})[\/.-](\d{1,2})(?:[\/.-](\d{2,4}))?\b/);
+ if(/\\bdopodomani\\b/.test(lower))date.setDate(date.getDate()+2);
+ else if(/\\bdomani\\b/.test(lower))date.setDate(date.getDate()+1);
+ let dm=lower.match(/\\b(\\d{1,2})[\\/.-](\\d{1,2})(?:[\\/.-](\\d{2,4}))?\\b/);
  if(dm){let y=dm[3]?Number(dm[3]):today.getFullYear();if(y<100)y+=2000;date=new Date(y,Number(dm[2])-1,Number(dm[1]))}
  const dateValue=date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0')+'-'+String(date.getDate()).padStart(2,'0');
- let tm=lower.match(/\b(?:alle?\s*)?(\d{1,2})(?:[:.](\d{2}))?\b/);let time=tm?String(Number(tm[1])).padStart(2,'0')+':'+(tm[2]||'00'):'09:00';
- let duration=60, d=lower.match(/durata\s*(?:di\s*)?(\d+)\s*(min|minuti|ora|ore)?/);
- if(d){let n=Number(d[1]),unit=d[2]||'';duration=/ora|ore/.test(unit)?n*60:n}else if(/un'?ora|una ora|1 ora/.test(lower))duration=60;else if(/mezz'?ora|30 minuti/.test(lower))duration=30;else if(/un'ora e mezza|un ora e mezza|1 ora e mezza/.test(lower))duration=90;else if(/due ore|2 ore/.test(lower))duration=120;
+ let tm=lower.match(/\\balle?\\s*(\\d{1,2})(?:[:.](\\d{2}))?\\b/);
+ if(!tm)tm=lower.match(/\\b(\\d{1,2})[:.](\\d{2})\\b/);
+ let time=tm?String(Number(tm[1])).padStart(2,'0')+':'+(tm[2]||'00'):'09:00';
+ let duration=60,d=lower.match(/durata\\s*(?:di\\s*)?(\\d+)\\s*(min|minuti|ora|ore)?/);
+ if(d){let n=Number(d[1]),unit=d[2]||'';duration=/ora|ore/.test(unit)?n*60:n}
+ else if(/un'?ora e mezza|un ora e mezza|1 ora e mezza/.test(lower))duration=90;
+ else if(/due ore|2 ore/.test(lower))duration=120;
+ else if(/mezz'?ora|30 minuti/.test(lower))duration=30;
  duration=[30,45,60,90,120,180,240].reduce((a,b)=>Math.abs(b-duration)<Math.abs(a-duration)?b:a,60);
- let urgent=/\burgent[ei]\b|\bsubito\b|\bpriorit[aà] alta\b/.test(lower);
- let name='',work='',address='';
- if(parts.length>=3){name=parts[1].replace(/\b(cliente|il cliente)\b/ig,'').trim();work=parts[2];}
- else {
-  let m=raw.match(/(?:per|cliente)\s+([A-ZÀ-Ý][\wÀ-ÿ'-]+(?:\s+[A-ZÀ-Ý][\wÀ-ÿ'-]+){0,2})/);
-  if(m)name=m[1];
-  let w=raw.match(/(?:intervento|lavoro|devo fare|fare)\s+(?:di\s+)?(.+?)(?=\s+(?:durata|domani|oggi|urgente|alle\s+\d)|$)/i);if(w)work=w[1];
+ let urgent=/\\burgent[ei]\\b|\\bsubito\\b|\\bpriorit[aà] alta\\b/.test(lower);
+ let name='',phone='',work='',address='',floor='';
+ let m=raw.match(/(?:cliente|per)\\s+([A-ZÀ-Ý][\\wÀ-ÿ'-]+(?:\\s+[A-ZÀ-Ý][\\wÀ-ÿ'-]+){1,2})/);
+ if(m)name=m[1].trim();
+ let ph=raw.match(/(?:telefono|cellulare|numero)\\s*(?:è|e|:)?\\s*([+\\d][\\d\\s().-]{6,})/i);
+ if(ph)phone=ph[1].trim();
+ let fl=raw.match(/(?:piano|interno|citofono)\\s*([\\w°/ -]{1,20})/i);
+ if(fl)floor=fl[1].trim();
+ let ad=raw.match(/\\b(via|viale|piazza|corso|strada|lungarno)\\s+([^,;.]+(?:,\\s*\\d+[a-zA-Z]?)?)/i);
+ if(ad)address=(ad[1]+' '+ad[2]).trim();
+ let w=raw.match(/(?:lavoro|intervento|devo fare|fare)\\s+(?:di\\s+)?(.+?)(?=\\s+(?:durata|domani|dopodomani|oggi|urgente|subito|alle\\s+\\d|telefono|cellulare|piano|interno|citofono|in\\s+via|via\\s)|$)/i);
+ if(w)work=w[1].trim();
+ if(!work){
+  let cleaned=raw.replace(/(?:cliente|per)\\s+[A-ZÀ-Ý][\\wÀ-ÿ'-]+(?:\\s+[A-ZÀ-Ý][\\wÀ-ÿ'-]+){1,2}/,'')
+   .replace(/\\b(?:domani|dopodomani|oggi|urgente|subito)\\b/ig,'')
+   .replace(/\\balle?\\s*\\d{1,2}(?:[:.]\\d{2})?\\b/ig,'')
+   .replace(/\\b(?:durata\\s*(?:di\\s*)?\\d+\\s*(?:min|minuti|ora|ore)?|un'?ora e mezza|due ore|mezz'?ora)\\b/ig,'')
+   .replace(/(?:telefono|cellulare|numero)\\s*(?:è|e|:)?\\s*[+\\d][\\d\\s().-]{6,}/ig,'')
+   .replace(/(?:piano|interno|citofono)\\s*[\\w°/ -]{1,20}/ig,'')
+   .replace(/\\b(?:via|viale|piazza|corso|strada|lungarno)\\s+[^,;.]+/ig,'')
+   .replace(/[;,]/g,' ').trim();
+  work=cleaned;
  }
- if(!work){work=parts.find((x,i)=>i>=2&&!/durata|urgent[ei]|programmare/i.test(x))||''}
- let loc=work.match(/\b(?:a|in)\s+(via\s+[^,]+|piazza\s+[^,]+|corso\s+[^,]+|[A-ZÀ-Ý][\wÀ-ÿ' -]{1,35})\s*$/i);
- if(loc){address=loc[1].trim();work=work.replace(loc[0],'').trim()}
- if(!address){let am=raw.match(/\b(via\s+[^,]+|piazza\s+[^,]+|viale\s+[^,]+|corso\s+[^,]+)\b/i);if(am)address=am[1].trim()}
- work=work.replace(/\bdurata\b.*$/i,'').replace(/\burgent[ei]\b/ig,'').trim().replace(/\s{2,}/g,' ');
- document.getElementById('jobDate').value=dateValue;document.getElementById('jobTime').value=time;document.getElementById('jobDuration').value=String(duration);document.getElementById('jobPriority').value=urgent?'urgent':'normal';
+ work=work.replace(/\\b(?:urgente|urgenti|subito)\\b/ig,'').trim();
+ document.getElementById('jobDate').value=dateValue;
+ document.getElementById('jobTime').value=time;
+ document.getElementById('jobDuration').value=String(duration);
+ document.getElementById('jobPriority').value=urgent?'urgent':'normal';
+ if(name)document.getElementById('jobCustomerName').value=name;
+ if(phone)document.getElementById('jobCustomerPhone').value=phone;
+ if(address)document.getElementById('jobCustomerAddress').value=address;
+ if(floor)document.getElementById('jobCustomerFloor').value=floor;
  if(work)document.getElementById('jobType').value=work.charAt(0).toLocaleUpperCase('it-IT')+work.slice(1);
- if(address)document.getElementById('jobAddress').value=address;
- if(name){let norm=x=>(x||'').toLocaleLowerCase('it-IT').replace(/[^a-zà-ÿ0-9 ]/g,'').replace(/\s+/g,' ').trim();let found=db.clients.find(c=>norm(c.name)===norm(name));if(!found){if(confirm('Non trovo “'+name+'” nella rubrica. Vuoi aggiungerlo come nuovo cliente?')){found={id:String(Date.now()),name:name,phone:'',address:address,email:'',notes:'',media:[]};db.clients.push(found);save();fillClientSelect(found.id)}}else{fillClientSelect(found.id)} }
- document.getElementById('voiceStatus').textContent='Campi compilati: controlla cliente, data, ora, lavoro e indirizzo prima di salvare.';
+ document.getElementById('voiceStatus').textContent='Campi compilati: controlla tutti i dati prima di salvare. Il cliente verrà creato o aggiornato solo al salvataggio dell’intervento.';
 }
 
 load();renderAll();loadSettingsUI();checkUpcomingReminders();document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkUpcomingReminders()});setInterval(checkUpcomingReminders,60000);
